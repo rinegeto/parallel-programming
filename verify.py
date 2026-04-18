@@ -1,21 +1,22 @@
 import numpy as np
 import sys
 
-def main(): 
-    matrixA = np.loadtxt("matrix_a.txt", skiprows=1)
-    matrixB = np.loadtxt("matrix_b.txt", skiprows=1)
-    matrixAB = np.loadtxt("result_c.txt", skiprows=1)  
+def read_mat(file):
+    with open(file) as f:
+        n = int(f.readline())
+        return np.array([list(map(float, f.readline().split())) for _ in range(n)])
+
+try:
+    A = read_mat("matrix_a.txt")
+    B = read_mat("matrix_b.txt")
+    C = read_mat("result_c.txt")
     
-    matrixRes = np.dot(matrixA, matrixB)
-    
-    if np.allclose(matrixRes, matrixAB, rtol=1e-9, atol=1e-9):
-        print("Проверка прошла успешно")
-        return 0
+    if np.allclose(np.dot(A, B), C):
+        print("Верификация успешна")
+        sys.exit(0)
     else:
-        print("Ошибка: результаты не совпадают")
-        print(f"Макс. разница: {np.max(np.abs(matrixRes - matrixAB)):.2e}")
-        return 1
-    
-if __name__ == "__main__":
-    result = main()
-    sys.exit(result)
+        print("Ошибка вычислений")
+        sys.exit(1)
+except Exception as e:
+    print(f"ERROR {e}")
+    sys.exit(1)
