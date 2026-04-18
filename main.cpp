@@ -3,62 +3,68 @@
 #include <vector>
 #include <chrono>
 #include <omp.h>
-#include <iomanip>
 
 using namespace std;
 
-int main() {
-    ifstream inA("matrix_a.txt"), inB("matrix_b.txt");
-    if (!inA || !inB) { 
-        cerr << "Error: cannot open input files" << endl; 
-        return 1; 
+void loadMatrix(const string& filename, vector<long long>& matrix, size_t& n) {
+    ifstream file(filename);
+    file >> n;
+    matrix.resize(n * n);
+    for (size_t i = 0; i < n * n; ++i) {
+        file >> matrix[i];
     }
+}
 
-    int N;
-    inA >> N;
-    vector<double> A(N * N);
-    for (int i = 0; i < N * N; ++i) 
-        inA >> A[i];
-
-    int N2; 
-    inB >> N2;
-    if (N != N2) { 
-        cerr << "Error: matrix dimensions don't match" << endl; 
-        return 1; 
+void saveResult(const string& filename, const vector<long long>& matrix, 
+                size_t n, double exec_time) {
+    ofstream file(filename);
+    file << n << "\n";
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            file << matrix[i * n + j];
+            if (j + 1 < n) file << " ";
+        }
+        file << "\n";
     }
+    file << "Объем: " << n << "\n";
+    file << "Время: " << exec_time << "\n";
+}
+
+vector<long long> multiplyMatrices(const vector<long long>& A, 
+                                   const vector<long long>& B, size_t n) {
+    vector<long long> C(n * n, 0);
     
-    vector<double> B(N * N);
-    for (int i = 0; i < N * N; ++i) 
-        inB >> B[i];
-
-    vector<double> C(N * N, 0.0);
-
-    auto start = chrono::high_resolution_clock::now();
-
     #pragma omp parallel for schedule(static)
-    for (int i = 0; i < N; ++i) {
-        for (int j = 0; j < N; ++j) {
-            double sum = 0.0;
-            for (int k = 0; k < N; ++k)
-                sum += A[i * N + k] * B[k * N + j];
-            C[i * N + j] = sum;
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            long long sum = 0;
+            for (size_t k = 0; k < n; ++k) {
+                sum += A[i * n + k] * B[k * n + j];
+            }
+            C[i * n + j] = sum;
         }
     }
+    return C;
+}
 
-    auto end = chrono::high_resolution_clock::now();
-    double time_sec = chrono::duration<double>(end - start).count();
+int main() {
+    vector<long long> A, B;
+    size_t nA, nB;
 
-    ofstream out("result_c.txt");
-    out << fixed << setprecision(6) << N << "\n";
-    for (int i = 0; i < N; ++i) {
-        for (int j = 0; j < N; ++j)
-            out << C[i * N + j] << (j == N - 1 ? "\n" : " ");
-    }
-    out.close();
+    loadMatrix("matrix_a.txt", A, nA);
+    loadMatrix("matrix_b.txt", B, nB);
 
-    cout << "Size: " << N << "x" << N << endl;
-    cout << "Time: " << time_sec << " sec" << endl;
-    cout << "Result saved to result_c.txt" << endl;
+    auto t_start = chrono::high_resolution_clock::now();
+    vector<long long> result = multiplyMatrices(A, B, nA);
+    auto t_end = chrono::high_resolution_clock::now();
+
+    double duration = chrono::duration<double>(t_end - t_start).count();
+
+    saveResult("result_c.txt", result, nA, duration);
     
+    cout << "Умножение завершено" << endl;
+    cout << "Размер: " << nA << "x" << nA << endl;
+    cout << "Время: " << duration << " сек" << endl;
+
     return 0;
 }
