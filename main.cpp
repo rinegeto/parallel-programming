@@ -3,6 +3,7 @@
 #include <vector>
 #include <chrono>
 #include <omp.h>
+#include <windows.h>
 
 using namespace std;
 
@@ -15,8 +16,7 @@ void loadMatrix(const string& filename, vector<long long>& matrix, size_t& n) {
     }
 }
 
-void saveResult(const string& filename, const vector<long long>& matrix, 
-                size_t n, double exec_time) {
+void saveResult(const string& filename, const vector<long long>& matrix, size_t n) {
     ofstream file(filename);
     file << n << "\n";
     for (size_t i = 0; i < n; ++i) {
@@ -26,14 +26,12 @@ void saveResult(const string& filename, const vector<long long>& matrix,
         }
         file << "\n";
     }
-    file << "Объем: " << n << "\n";
-    file << "Время: " << exec_time << "\n";
+    file.close();
 }
 
 vector<long long> multiplyMatrices(const vector<long long>& A, 
                                    const vector<long long>& B, size_t n) {
     vector<long long> C(n * n, 0);
-    
     #pragma omp parallel for schedule(static)
     for (size_t i = 0; i < n; ++i) {
         for (size_t j = 0; j < n; ++j) {
@@ -48,6 +46,8 @@ vector<long long> multiplyMatrices(const vector<long long>& A,
 }
 
 int main() {
+    SetConsoleOutputCP(CP_UTF8);
+    
     vector<long long> A, B;
     size_t nA, nB;
 
@@ -60,11 +60,12 @@ int main() {
 
     double duration = chrono::duration<double>(t_end - t_start).count();
 
-    saveResult("result_c.txt", result, nA, duration);
+    saveResult("result_c.txt", result, nA);
     
     cout << "Умножение завершено" << endl;
     cout << "Размер: " << nA << "x" << nA << endl;
     cout << "Время: " << duration << " сек" << endl;
+    cout << "Объем задачи: " << nA * nA << " элементов" << endl;
 
     return 0;
 }
