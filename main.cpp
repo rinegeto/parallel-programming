@@ -2,7 +2,6 @@
 #include <fstream>
 #include <vector>
 #include <chrono>
-#include <omp.h>
 #include <windows.h>
 
 using namespace std;
@@ -32,7 +31,7 @@ void saveResult(const string& filename, const vector<long long>& matrix, size_t 
 vector<long long> multiplyMatrices(const vector<long long>& A, 
                                    const vector<long long>& B, size_t n) {
     vector<long long> C(n * n, 0);
-    #pragma omp parallel for schedule(static)
+    
     for (size_t i = 0; i < n; ++i) {
         for (size_t j = 0; j < n; ++j) {
             long long sum = 0;
